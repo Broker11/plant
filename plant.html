@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Plant — Grow Your Habits</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#090c07;--bg2:#0d1209;--surface:#111a0d;--surface2:#172214;
+  --border:#1c2918;--border2:#253520;--text:#e2e8cc;--muted:#445a38;
+  --accent:#7ec850;--accent2:#b0e464;--gold:#d4a843;--gold2:#f0c84a;
+  --danger:#e05c4b;--soil:#5c3d1e;--sky:#0a1a0e;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Playfair Display',serif;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:radial-gradient(rgba(126,200,80,0.055) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;z-index:0;
+}
+/* ── HEADER ── */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 26px 16px;border-bottom:1px solid var(--border);
+  position:sticky;top:0;background:rgba(9,12,7,0.93);
+  backdrop-filter:blur(18px);z-index:100;
+}
+.logo{font-size:26px;font-weight:900;letter-spacing:-0.02em;color:var(--accent2);display:flex;align-items:center;gap:9px}
+.logo-leaf{display:inline-block;animation:leafsway 4s ease-in-out infinite}
+@keyframes leafsway{0%,100%{transform:rotate(-6deg) scale(1)}50%{transform:rotate(6deg) scale(1.05)}}
+.header-r{display:flex;align-items:center;gap:9px}
+.date-pill{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:100px;padding:6px 13px}
+.add-btn{background:var(--accent);color:#060a04;border:none;width:38px;height:38px;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:900;transition:transform 0.18s,box-shadow 0.18s}
+.add-btn:hover{transform:scale(1.1);box-shadow:0 0 0 8px rgba(126,200,80,0.14)}
+/* ── MAIN ── */
+main{flex:1;padding:26px 18px 110px;max-width:680px;width:100%;margin:0 auto;position:relative;z-index:1}
+/* ── STATS ── */
+.stats-bar{display:flex;gap:10px;margin-bottom:30px}
+.stat-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px 10px;text-align:center}
+.stat-num{font-size:30px;font-weight:900;line-height:1;color:var(--accent2)}
+.stat-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-top:5px}
+/* ── SECTION ── */
+.section-hint{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+.section-hint::after{content:'';flex:1;height:1px;background:var(--border)}
+/* ── GRID ── */
+.habits-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(max-width:420px){.habits-grid{grid-template-columns:1fr}}
+/* ── CARD ── */
+.habit-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  overflow:hidden;position:relative;
+  transition:border-color 0.4s,box-shadow 0.4s;
+  animation:cardIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:scale(0.78) translateY(18px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.habit-card.done-today{border-color:rgba(126,200,80,0.6);box-shadow:0 0 22px rgba(126,200,80,0.1)}
+.habit-card.full-tree{border-color:var(--gold);box-shadow:0 0 32px rgba(212,168,67,0.22)}
+/* card top */
+.card-top{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 0}
+.emoji-badge{font-size:16px;background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:4px 8px}
+.card-actions{display:flex;gap:3px;opacity:0;transition:opacity 0.2s}
+.habit-card:hover .card-actions{opacity:1}
+.icon-btn{background:none;border:none;cursor:pointer;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);transition:background 0.15s,color 0.15s}
+.icon-btn:hover{background:var(--surface2)}
+.icon-btn.edit:hover{color:var(--accent2)}
+.icon-btn.del:hover{color:var(--danger);background:rgba(224,92,75,0.1)}
+/* stage label */
+.stage-label{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:0.18em;color:var(--muted);text-transform:uppercase;text-align:center;padding:5px 0 0}
+/* plant canvas area */
+.plant-area{
+  display:flex;justify-content:center;align-items:flex-end;
+  height:145px;padding:6px 14px 0;
+  cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:none;
+  position:relative;
+}
+canvas.plant-cv{display:block}
+/* hold bar */
+.hbar-wrap{padding:8px 14px 0}
+.hbar{height:2px;background:var(--border);border-radius:2px;overflow:hidden}
+.hbar-fill{height:100%;width:0%;background:var(--accent);border-radius:2px;transition:width 0.05s linear}
+.habit-card.done-today .hbar-fill{width:100%;background:var(--muted)}
+/* card body */
+.card-body{padding:10px 13px 13px}
+.habit-name{font-size:14px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.streak-row{display:flex;align-items:center;gap:5px;margin-bottom:9px}
+.streak-txt{font-family:'DM Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:0.04em}
+.days-left{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-left:auto}
+.week-dots{display:flex;gap:4px;margin-bottom:9px}
+.wd{width:7px;height:7px;border-radius:50%;background:var(--border)}
+.wd.on{background:var(--accent)}
+.wd.te{background:transparent;border:1px solid var(--muted)}
+.tags{display:flex;flex-direction:column;gap:4px}
+.tag{border-radius:8px;padding:5px 8px;font-family:'DM Mono',monospace;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0.04em}
+.tag.reward{background:rgba(126,200,80,0.07);border:1px solid rgba(126,200,80,0.2);color:var(--accent2)}
+.tag.consequence{background:rgba(224,92,75,0.07);border:1px solid rgba(224,92,75,0.2);color:var(--danger)}
+.completions{font-family:'DM Mono',monospace;font-size:8px;color:var(--muted);margin-top:7px;letter-spacing:0.07em}
+/* ── EMPTY ── */
+.empty-state{grid-column:1/-1;text-align:center;padding:60px 20px}
+.empty-icon{font-size:62px;margin-bottom:16px;display:block;animation:efloat 3s ease-in-out infinite}
+@keyframes efloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.empty-state h2{font-size:22px;font-weight:900;color:var(--muted);margin-bottom:8px}
+.empty-state p{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);opacity:0.5}
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0 14px 18px;opacity:0;pointer-events:none;transition:opacity 0.28s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:26px;padding:26px 22px;width:100%;max-width:500px;transform:translateY(40px);transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-title{font-size:20px;font-weight:900;margin-bottom:4px;color:var(--accent2)}
+.modal-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-bottom:22px;letter-spacing:0.08em}
+.field{margin-bottom:15px}
+.field label{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.22em;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+.field input{width:100%;background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:11px 13px;color:var(--text);font-family:'Playfair Display',serif;font-size:14px;outline:none;transition:border-color 0.2s}
+.field input:focus{border-color:var(--accent)}
+.emoji-row{display:flex;gap:7px;flex-wrap:wrap}
+.emo-btn{width:38px;height:38px;background:var(--surface);border:2px solid var(--border2);border-radius:10px;font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color 0.15s,transform 0.15s}
+.emo-btn:hover{transform:scale(1.12)}
+.emo-btn.sel{border-color:var(--accent);background:rgba(126,200,80,0.1)}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.btn-cancel{flex:1;padding:12px;background:none;border:1px solid var(--border2);border-radius:12px;color:var(--muted);font-family:'Playfair Display',serif;font-size:14px;cursor:pointer;transition:border-color 0.2s,color 0.2s}
+.btn-cancel:hover{border-color:var(--text);color:var(--text)}
+.btn-save{flex:2;padding:12px;background:var(--accent);border:none;border-radius:12px;color:#060a04;font-family:'Playfair Display',serif;font-size:14px;font-weight:700;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s}
+.btn-save:hover{transform:scale(1.02);box-shadow:0 0 20px rgba(126,200,80,0.28)}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface2);border:1px solid var(--border2);border-radius:100px;padding:11px 22px;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;z-index:400;transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;color:var(--text);letter-spacing:0.07em}
+.toast.show{transform:translateX(-50%) translateY(0)}
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:500}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+<header>
+  <div class="logo"><span class="logo-leaf">🌿</span> Plant</div>
+  <div class="header-r">
+    <div class="date-pill" id="date-pill"></div>
+    <button class="add-btn" id="open-modal" title="Add habit">+</button>
+  </div>
+</header>
+<main>
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-num" id="s-today">0</div><div class="stat-label">Today</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-streak">0</div><div class="stat-label">Best Streak</div></div>
+    <div class="stat-card"><div class="stat-num" id="s-trees">0</div><div class="stat-label">Full Trees</div></div>
+  </div>
+  <div class="section-hint">hold plant to water it</div>
+  <div class="habits-grid" id="grid"></div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Plant a Seed</div>
+    <div class="modal-sub" id="modal-sub">Every great tree starts with one small day</div>
+    <div class="field"><label>Habit Name</label><input id="f-name" placeholder="e.g. Morning meditation" maxlength="28"></div>
+    <div class="field"><label>Icon</label><div class="emoji-row" id="emoji-row"></div></div>
+    <div class="field"><label>🎁 Reward (for completing)</label><input id="f-reward" placeholder="e.g. Buy a new book" maxlength="36"></div>
+    <div class="field"><label>⚡ Consequence (for skipping)</label><input id="f-consequence" placeholder="e.g. 20 squats" maxlength="36"></div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btn-cancel">Cancel</button>
+      <button class="btn-save" id="btn-save">Plant Seed 🌱</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+const EMOJIS=['🧘','🏃','📚','💧','🥗','😴','🎯','🎨','🎸','✍️','🌿','🏋️','🚴','🧠','☀️','🍎','📵','🧹','💊','🐾'];
+const HOLD_MS=900, MAX_DAYS=90;
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let habits=JSON.parse(localStorage.getItem('plant_v2')||'[]');
+let selEmoji=EMOJIS[0], editId=null, holdTimers={};
+
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function save(){localStorage.setItem('plant_v2',JSON.stringify(habits))}
+function calcStreak(h){
+  if(!h.history.length)return 0;
+  const s=[...h.history].sort((a,b)=>b.localeCompare(a));
+  let c=0; const cur=new Date();
+  if(s[0]!==todayStr())cur.setDate(cur.getDate()-1);
+  for(const d of s){if(d===cur.toISOString().slice(0,10)){c++;cur.setDate(cur.getDate()-1)}else break}
+  return c;
+}
+function getStage(days){
+  if(days===0)return 0; if(days===1)return 1; if(days<=4)return 2;
+  if(days<=9)return 3; if(days<=19)return 4; if(days<=34)return 5;
+  if(days<=54)return 6; if(days<=74)return 7; if(days<=89)return 8; return 9;
+}
+const STAGE_NAMES=['Empty Pot','Seed Planted','First Sprout','Seedling','Young Plant','Leafy Bush','Small Tree','Growing Tree','Tall Tree','Full Tree 🌳'];
+
+// ── DRAWING ────────────────────────────────────────────────────────────────
+function drawPlant(canvas, days, p=1){
+  const W=canvas.width,H=canvas.height,ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const stage=getStage(days);
+  const gold=stage===9;
+  const MX=W/2, SOIL=H-20;
+
+  // Draw pot / soil mound
+  const g=ctx.createRadialGradient(MX,SOIL,2,MX,SOIL,W*0.38);
+  g.addColorStop(0,'#7a5230'); g.addColorStop(1,'#3e2410');
+  ctx.fillStyle=g;
+  ctx.beginPath(); ctx.ellipse(MX,SOIL,W*0.38,12,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(140,90,50,0.3)';
+  ctx.beginPath(); ctx.ellipse(MX-4,SOIL-4,W*0.24,5,0,0,Math.PI*2); ctx.fill();
+
+  if(stage===0){
+    ctx.fillStyle='rgba(126,200,80,0.12)'; ctx.font='11px DM Mono,monospace';
+    ctx.textAlign='center'; ctx.fillText('hold to plant',MX,H-42); return;
+  }
+
+  if(stage===1){ // seed
+    ctx.save(); ctx.globalAlpha=p;
+    ctx.translate(MX,SOIL-5*p);
+    const sg=ctx.createRadialGradient(-1,-1,1,0,0,7);
+    sg.addColorStop(0,'#d4aa55'); sg.addColorStop(1,'#8a5c20');
+    ctx.fillStyle='rgba(40,22,8,0.8)';
+    ctx.beginPath(); ctx.ellipse(0,0,10,6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=sg;
+    ctx.beginPath(); ctx.ellipse(0,-1,7.5,5,0.15,0,Math.PI*2); ctx.fill();
+    // crack line
+    ctx.strokeStyle='rgba(60,30,0,0.6)'; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.moveTo(-2,2); ctx.lineTo(0,-3); ctx.lineTo(2,1); ctx.stroke();
+    ctx.restore(); return;
+  }
+
+  const SB=SOIL-2; // stem base y
+
+  function stem(h,w,col='#3a7a1a'){
+    const sg=ctx.createLinearGradient(MX-w,SB,MX+w,SB);
+    sg.addColorStop(0,'rgba(0,0,0,0.3)'); sg.addColorStop(0.4,col); sg.addColorStop(1,'rgba(0,0,0,0.3)');
+    ctx.strokeStyle=sg; ctx.lineWidth=w*2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(MX,SB); ctx.lineTo(MX,SB-h); ctx.stroke();
+  }
+
+  function leaf(x,y,dir,sz,col,a=1){
+    ctx.save(); ctx.globalAlpha=Math.min(1,p)*a;
+    ctx.fillStyle=col;
+    ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.bezierCurveTo(x+dir*sz*0.7,y-sz*0.6,x+dir*sz*1.2,y-sz*0.1,x+dir*sz,y+sz*0.2);
+    ctx.bezierCurveTo(x+dir*sz*0.5,y+sz*0.5,x,y+sz*0.2,x,y);
+    ctx.fill(); ctx.restore();
+  }
+
+  function foliage(cx,cy,r,gold=false){
+    const c1=gold?'#b07810':' #206010';
+    const c2=gold?'#d4a020':'#3a9020';
+    const c3=gold?'#f0c030':'#60cc28';
+    const c4=gold?'rgba(255,240,100,0.35)':'rgba(160,255,80,0.28)';
+    ctx.save(); ctx.globalAlpha=Math.min(1,p);
+    ctx.fillStyle=c1; ctx.beginPath(); ctx.arc(cx+3,cy+4,r*0.88,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=c2; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=c3; ctx.beginPath(); ctx.arc(cx-r*0.22,cy-r*0.25,r*0.58,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=c4; ctx.beginPath(); ctx.arc(cx-r*0.3,cy-r*0.35,r*0.22,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  if(stage===2){
+    const h=14*p;
+    stem(h,1.2,'#5aaa28');
+    if(p>0.4){const lp=(p-0.4)/0.6; leaf(MX,SB-h*0.65,1,9*lp,'#6cbf30'); leaf(MX,SB-h*0.65,-1,7*lp,'#6cbf30')}
+    return;
+  }
+  if(stage===3){
+    const h=(22+6*((days-5)/4))*p;
+    stem(h,1.6,'#4ea020');
+    leaf(MX,SB-h*0.55,1,12,'#52b025'); leaf(MX,SB-h*0.55,-1,10,'#52b025');
+    leaf(MX,SB-h*0.82,1,8*p,'#78d030'); leaf(MX,SB-h*0.82,-1,7*p,'#78d030');
+    return;
+  }
+  if(stage===4){
+    const h=(34+10*((days-10)/9))*p;
+    stem(h,2.2,'#3a9018');
+    leaf(MX,SB-h*0.4,1,14,'#48a820'); leaf(MX,SB-h*0.4,-1,13,'#48a820');
+    leaf(MX,SB-h*0.65,1,12,'#5dc028'); leaf(MX,SB-h*0.65,-1,11,'#5dc028');
+    leaf(MX,SB-h*0.85,1,9*p,'#7ad838'); leaf(MX,SB-h*0.85,-1,8*p,'#7ad838');
+    ctx.save(); ctx.globalAlpha=p; ctx.fillStyle='#90e040';
+    ctx.beginPath(); ctx.arc(MX,SB-h,5,0,Math.PI*2); ctx.fill(); ctx.restore();
+    return;
+  }
+  if(stage===5){
+    const h=(50+12*((days-20)/14))*p;
+    stem(h,3.5,'#2e7a10');
+    const fy=SB-h*0.72;
+    foliage(MX,fy,28*p);
+    foliage(MX-15*p,fy+8,20*p);
+    foliage(MX+15*p,fy+8,20*p);
+    return;
+  }
+  if(stage===6){
+    const t=(days-35)/19,h=(64+18*t)*p;
+    stem(h,5+t*2,'#285e10');
+    const fy=SB-h*0.65;
+    foliage(MX,fy,34*p);
+    foliage(MX-20*p,fy+10,24*p);
+    foliage(MX+20*p,fy+10,24*p);
+    foliage(MX,fy-20*p,22*p);
+    return;
+  }
+  if(stage===7){
+    const t=(days-55)/19,h=(82+14*t)*p;
+    stem(h,7+t*2,'#224e0e');
+    const fy=SB-h*0.58;
+    foliage(MX,fy,40*p);
+    foliage(MX-26*p,fy+8,28*p);
+    foliage(MX+26*p,fy+8,28*p);
+    foliage(MX-14*p,fy-24*p,26*p);
+    foliage(MX+14*p,fy-24*p,26*p);
+    foliage(MX,fy-42*p,20*p);
+    return;
+  }
+  if(stage===8){
+    const t=(days-75)/14,h=(96+10*t)*p;
+    stem(h,9+t,'#1e4810');
+    const fy=SB-h*0.52;
+    foliage(MX,fy,44*p);
+    foliage(MX-28*p,fy+5,32*p);
+    foliage(MX+28*p,fy+5,32*p);
+    foliage(MX-15*p,fy-26*p,28*p);
+    foliage(MX+15*p,fy-26*p,28*p);
+    foliage(MX,fy-46*p,24*p);
+    foliage(MX,fy-62*p,16*p);
+    return;
+  }
+  if(stage===9){ // FULL GOLDEN TREE
+    const h=110*p;
+    // golden trunk
+    const tg=ctx.createLinearGradient(MX-10,SB,MX+10,SB);
+    tg.addColorStop(0,'#5a3010'); tg.addColorStop(0.4,'#c07820'); tg.addColorStop(1,'#5a3010');
+    ctx.strokeStyle=tg; ctx.lineWidth=14; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(MX,SB); ctx.lineTo(MX,SB-h); ctx.stroke();
+    const fy=SB-h*0.46;
+    foliage(MX,fy,50*p,true);
+    foliage(MX-32*p,fy+3,36*p,true);
+    foliage(MX+32*p,fy+3,36*p,true);
+    foliage(MX-17*p,fy-28*p,32*p,true);
+    foliage(MX+17*p,fy-28*p,32*p,true);
+    foliage(MX,fy-50*p,28*p,true);
+    foliage(MX,fy-66*p,20*p,true);
+    // star
+    if(p>0.85){
+      const sp=(p-0.85)/0.15;
+      ctx.save(); ctx.globalAlpha=sp;
+      const starY=fy-80*p;
+      // glow
+      const gg=ctx.createRadialGradient(MX,starY,1,MX,starY,16);
+      gg.addColorStop(0,'rgba(255,240,60,0.8)'); gg.addColorStop(1,'rgba(255,200,0,0)');
+      ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(MX,starY,16,0,Math.PI*2); ctx.fill();
+      // star shape
+      ctx.beginPath();
+      for(let i=0;i<5;i++){
+        const a=Math.PI/180*(72*i-90);
+        const x=MX+11*Math.cos(a),y=starY+11*Math.sin(a);
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+        const a2=Math.PI/180*(72*i-90+36);
+        ctx.lineTo(MX+4.5*Math.cos(a2),starY+4.5*Math.sin(a2));
+      }
+      ctx.closePath(); ctx.fillStyle='#fff5a0'; ctx.fill();
+      ctx.strokeStyle='#d4a010'; ctx.lineWidth=0.8; ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function render(){
+  const grid=document.getElementById('grid');
+  grid.innerHTML='';
+  if(!habits.length){
+    grid.innerHTML=`<div class="empty-state"><span class="empty-icon">🌱</span><h2>Your garden is empty</h2><p>Tap + to plant your first habit</p></div>`;
+    updateStats(); return;
+  }
+  habits.forEach(h=>{
+    const isToday=h.history.includes(todayStr());
+    const days=h.history.length;
+    const str=calcStreak(h);
+    if(str>(h.bestStreak||0)){h.bestStreak=str;save()}
+    const stage=getStage(days);
+    const isFullTree=stage===9;
+
+    const card=document.createElement('div');
+    card.className='habit-card'+(isToday?' done-today':'')+(isFullTree?' full-tree':'');
+
+    const dots=[];
+    for(let i=6;i>=0;i--){
+      const d=new Date(); d.setDate(d.getDate()-i);
+      const ds=d.toISOString().slice(0,10);
+      const on=h.history.includes(ds);
+      const isNow=ds===todayStr();
+      dots.push(`<div class="wd ${on?'on':''} ${!on&&isNow?'te':''}"></div>`);
+    }
+
+    card.innerHTML=`
+      <div class="card-top">
+        <div class="emoji-badge">${h.emoji}</div>
+        <div class="card-actions">
+          <button class="icon-btn edit" title="Edit">✏️</button>
+          <button class="icon-btn del" title="Delete">🗑</button>
+        </div>
+      </div>
+      <div class="stage-label">${STAGE_NAMES[stage]}</div>
+      <div class="plant-area" data-id="${h.id}">
+        <canvas class="plant-cv" width="160" height="145" data-id="${h.id}"></canvas>
+      </div>
+      <div class="hbar-wrap"><div class="hbar"><div class="hbar-fill" id="bar-${h.id}"></div></div></div>
+      <div class="card-body">
+        <div class="habit-name">${h.name}</div>
+        <div class="streak-row">
+          <span style="font-size:12px">🌿</span>
+          <span class="streak-txt">${str} day${str!==1?'s':''}</span>
+          <span class="days-left">${Math.max(0,MAX_DAYS-days)}d to tree</span>
+        </div>
+        <div class="week-dots">${dots.join('')}</div>
+        <div class="tags">
+          ${h.reward?`<div class="tag reward">🎁 ${h.reward}</div>`:''}
+          ${h.consequence?`<div class="tag consequence">⚡ ${h.consequence}</div>`:''}
+        </div>
+        <div class="completions">${days}/${MAX_DAYS} days watered</div>
+      </div>`;
+
+    grid.appendChild(card);
+    const cv=card.querySelector('canvas.plant-cv');
+    drawPlant(cv,days,1);
+    setupHold(card.querySelector('.plant-area'),h);
+    card.querySelector('.icon-btn.edit').addEventListener('click',e=>{e.stopPropagation();openModal(h.id)});
+    card.querySelector('.icon-btn.del').addEventListener('click',e=>{e.stopPropagation();deleteHabit(h.id)});
+  });
+  updateStats();
+}
+
+// ── HOLD ───────────────────────────────────────────────────────────────────
+function setupHold(el,habit){
+  const id=habit.id;
+  let frame,startT;
+  function start(e){
+    e.preventDefault();
+    if(holdTimers[id])return;
+    startT=null;
+    const bar=document.getElementById('bar-'+id);
+    function tick(ts){
+      if(!startT)startT=ts;
+      const pct=Math.min((ts-startT)/HOLD_MS,1);
+      if(bar&&!habit.history.includes(todayStr()))bar.style.width=(pct*100)+'%';
+      if(pct<1){frame=requestAnimationFrame(tick)}else{done()}
+    }
+    holdTimers[id]={cancel(){cancelAnimationFrame(frame);if(bar)bar.style.width=habit.history.includes(todayStr())?'100%':'0%'}};
+    frame=requestAnimationFrame(tick);
+  }
+  function cancel(){if(holdTimers[id]){holdTimers[id].cancel();delete holdTimers[id]}}
+  function done(){
+    delete holdTimers[id];
+    const isToday=habit.history.includes(todayStr());
+    const prevDays=habit.history.length;
+    if(!isToday){
+      habit.history.push(todayStr());
+      habit.successCount=(habit.successCount||0)+1;
+      save();
+      animateGrow(habit,prevDays,habit.history.length);
+      const ns=calcStreak(habit);
+      const nd=habit.history.length;
+      if(nd===MAX_DAYS){launchConfetti();showToast('🌳 Your habit is now a Full Tree! 90 days complete!')}
+      else if(ns>0&&ns%7===0){launchConfetti();showToast(`🔥 ${ns}-day streak!${habit.reward?' Reward: '+habit.reward:''}`)}
+      else{showToast(habit.reward?`🌱 Watered! Reward: ${habit.reward}`:'🌱 Plant watered!')}
+    } else {
+      habit.history=habit.history.filter(d=>d!==todayStr());
+      habit.successCount=Math.max(0,(habit.successCount||1)-1);
+      save(); render();
+      showToast(habit.consequence?`⚡ Unwatered. ${habit.consequence}`:'💧 Unwatered for today');
+    }
+  }
+  el.addEventListener('mousedown',start);
+  el.addEventListener('mouseup',cancel);
+  el.addEventListener('mouseleave',cancel);
+  el.addEventListener('touchstart',start,{passive:false});
+  el.addEventListener('touchend',cancel);
+  el.addEventListener('touchcancel',cancel);
+}
+
+function animateGrow(habit,fromDays,toDays){
+  render();
+  const cv=document.querySelector(`canvas.plant-cv[data-id="${habit.id}"]`);
+  if(!cv)return;
+  const fs=getStage(fromDays),ts=getStage(toDays);
+  let t=0;
+  const speed=fs===ts?0.05:0.022;
+  const run=()=>{
+    t+=speed; if(t>=1){drawPlant(cv,toDays,1);return}
+    const e=fs===ts?(0.85+Math.sin(t*Math.PI)*0.18):(1-Math.pow(1-t,3));
+    drawPlant(cv,toDays,e); requestAnimationFrame(run);
+  };
+  run();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────────────────
+const overlay=document.getElementById('modal-overlay');
+document.getElementById('open-modal').onclick=()=>openModal(null);
+document.getElementById('btn-cancel').onclick=closeModal;
+overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal()});
+
+const erow=document.getElementById('emoji-row');
+EMOJIS.forEach((e,i)=>{
+  const b=document.createElement('button');
+  b.className='emo-btn'+(i===0?' sel':'');
+  b.textContent=e;
+  b.onclick=()=>{document.querySelectorAll('.emo-btn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');selEmoji=e};
+  erow.appendChild(b);
+});
+
+function openModal(id){
+  editId=id;
+  const isEdit=id!=null;
+  const h=isEdit?habits.find(x=>x.id===id):null;
+  document.getElementById('modal-title').textContent=isEdit?'Edit Habit':'Plant a Seed';
+  document.getElementById('modal-sub').textContent=isEdit?'Update your growing habit':'Every great tree starts with one small day';
+  document.getElementById('btn-save').textContent=isEdit?'Save Changes 🌿':'Plant Seed 🌱';
+  document.getElementById('f-name').value=isEdit?h.name:'';
+  document.getElementById('f-reward').value=isEdit?(h.reward||''):'';
+  document.getElementById('f-consequence').value=isEdit?(h.consequence||''):'';
+  selEmoji=isEdit?h.emoji:EMOJIS[0];
+  document.querySelectorAll('.emo-btn').forEach((b,i)=>b.classList.toggle('sel',EMOJIS[i]===selEmoji));
+  overlay.classList.add('open');
+  setTimeout(()=>document.getElementById('f-name').focus(),350);
+}
+
+function closeModal(){overlay.classList.remove('open');editId=null}
+
+document.getElementById('btn-save').onclick=()=>{
+  const name=document.getElementById('f-name').value.trim();
+  if(!name){showToast('Give your habit a name 🌱');return}
+  if(editId!=null){
+    const h=habits.find(x=>x.id===editId);
+    h.name=name; h.emoji=selEmoji;
+    h.reward=document.getElementById('f-reward').value.trim();
+    h.consequence=document.getElementById('f-consequence').value.trim();
+    save(); closeModal(); render(); showToast('Habit updated 🌿');
+  } else {
+    habits.push({id:Date.now(),name,emoji:selEmoji,
+      reward:document.getElementById('f-reward').value.trim(),
+      consequence:document.getElementById('f-consequence').value.trim(),
+      history:[],successCount:0,bestStreak:0});
+    save(); closeModal(); render(); showToast('Seed planted! 🌱 Water it every day');
+  }
+};
+
+function deleteHabit(id){
+  if(!confirm('Remove this habit from your garden? The plant will be lost.'))return;
+  habits=habits.filter(h=>h.id!==id); save(); render(); showToast('Habit removed 🍂');
+}
+
+function updateStats(){
+  const t=todayStr();
+  document.getElementById('s-today').textContent=habits.filter(h=>h.history.includes(t)).length;
+  document.getElementById('s-streak').textContent=habits.reduce((m,h)=>Math.max(m,h.bestStreak||0),0);
+  document.getElementById('s-trees').textContent=habits.filter(h=>getStage(h.history.length)===9).length;
+}
+
+let toastT;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3400);
+}
+
+function launchConfetti(){
+  const c=document.getElementById('confetti-canvas');
+  const ctx=c.getContext('2d');
+  c.width=window.innerWidth; c.height=window.innerHeight;
+  const cols=['#7ec850','#b0e464','#d4a843','#f0c84a','#4fffb0','#fff','#e2f880'];
+  const ps=Array.from({length:100},()=>({
+    x:Math.random()*c.width,y:-18,
+    vx:(Math.random()-0.5)*8,vy:Math.random()*5+2,
+    sz:Math.random()*9+4,rot:Math.random()*360,rv:(Math.random()-0.5)*9,
+    col:cols[Math.floor(Math.random()*cols.length)]
+  }));
+  let fr;
+  (function draw(){
+    ctx.clearRect(0,0,c.width,c.height);
+    let alive=false;
+    ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.11;p.rot+=p.rv;
+      if(p.y<c.height+20)alive=true;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle=p.col;ctx.globalAlpha=0.88;
+      ctx.fillRect(-p.sz/2,-p.sz/4,p.sz,p.sz*0.45);ctx.restore();
+    });
+    if(alive)fr=requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+document.getElementById('date-pill').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+render();
+</script>
+</body>
+</html>
